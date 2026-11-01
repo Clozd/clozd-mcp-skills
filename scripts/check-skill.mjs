@@ -8,17 +8,20 @@ const MAX_DESCRIPTION = 200;
 const MAX_BODY_WARN = 10000;
 const ALLOWED_KEYS = new Set(["name", "description", "license", "compatibility", "metadata"]);
 
-// Reads top-level frontmatter keys by regex. Returns { error } or { keys, lines, body }.
+// Reads top-level frontmatter keys by string parsing. Returns { error } or { keys, lines, body }.
 export function parseFrontmatter(text) {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n([\s\S]*))?$/.exec(text);
-  if (!match) return { error: "missing frontmatter" };
-  const lines = match[1].split(/\r?\n/);
+  const lines = text.split("\n").map((line) => line.replace(/\r$/, ""));
+  if (lines[0] !== "---") return { error: "missing frontmatter" };
+  const end = lines.indexOf("---", 1);
+  if (end === -1) return { error: "missing frontmatter" };
+  const block = lines.slice(1, end);
   const keys = new Map();
-  for (const line of lines) {
-    const key = /^([A-Za-z0-9_-]+):[ \t]*(.*)$/.exec(line);
-    if (key) keys.set(key[1], key[2].trim());
+  for (const line of block) {
+    const colon = line.indexOf(":");
+    const key = line.slice(0, colon);
+    if (colon > 0 && /^[A-Za-z0-9_-]+$/.test(key)) keys.set(key, line.slice(colon + 1).trim());
   }
-  return { keys, lines, body: match[2] ?? "" };
+  return { keys, lines: block, body: lines.slice(end + 1).join("\n") };
 }
 
 function unquote(value) {
@@ -28,12 +31,12 @@ function unquote(value) {
 
 // Reads metadata.version from the indented block under `metadata:`.
 export function metadataVersion(lines) {
-  const start = lines.findIndex((line) => /^metadata:[ \t]*$/.test(line));
+  const start = lines.findIndex((line) => line.trimEnd() === "metadata:");
   if (start === -1) return undefined;
   for (const line of lines.slice(start + 1)) {
-    if (!/^[ \t]/.test(line)) break;
-    const version = /^[ \t]+version:[ \t]*(.+?)[ \t]*$/.exec(line);
-    if (version) return unquote(version[1]);
+    if (!line.startsWith(" ") && !line.startsWith("\t")) break;
+    const trimmed = line.trim();
+    if (trimmed.startsWith("version:")) return unquote(trimmed.slice("version:".length).trim());
   }
   return undefined;
 }
