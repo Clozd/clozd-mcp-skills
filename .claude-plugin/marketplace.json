@@ -1,0 +1,13 @@
+{
+  "name": "clozd",
+  "description": "Clozd plugins for Claude Code: connect to the Clozd MCP server.",
+  "owner": { "name": "Clozd" },
+  "plugins": [
+    {
+      "name": "clozd",
+      "source": "./",
+      "version": "0.1.0",
+      "description": "Connects Claude to the Clozd MCP server."
+    }
+  ]
+}
