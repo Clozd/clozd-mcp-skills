@@ -1,0 +1,12 @@
+interface:
+  display_name: "Clozd Win-Loss Analysis"
+  short_description: "Find why deals are won or lost"
+  default_prompt: "Use $analyzing-win-loss to find why we lost deals last quarter."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "clozd"
+      description: "Read Clozd win-loss interview data"
+      transport: "streamable_http"
+      url: "https://mcp.clozd.com/mcp"
