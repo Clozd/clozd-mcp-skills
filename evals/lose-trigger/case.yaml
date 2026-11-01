@@ -1,0 +1,18 @@
+schema_version: "1.1"
+name: lose-trigger
+runs: 3
+execution:
+  prompt: Why did we lose deals last quarter?
+  max_turns: 12
+  allowed_tools: [Skill]
+graders:
+  - name: skill-invoked
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?analyzing-win-loss"'
+  - name: starts-with-get-programs
+    type: llm
+    focus: mock_calls
+    criteria: |
+      PASS only if the first Clozd call listed is get_programs.
+      FAIL if any other Clozd call comes first or no Clozd call was made.
