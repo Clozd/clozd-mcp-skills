@@ -1,7 +1,7 @@
 {
   "name": "clozd",
   "version": "0.1.0",
-  "description": "Connects Claude to the Clozd MCP server and adds a read-only skill for analyzing win-loss interview data.",
+  "description": "Connects Claude to the Clozd MCP server.",
   "author": { "name": "Clozd" },
   "license": "MIT",
   "repository": "https://github.com/Clozd/clozd-mcp-skills",
