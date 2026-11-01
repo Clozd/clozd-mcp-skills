@@ -7,6 +7,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { metadataVersion, parseFrontmatter } from "./check-skill.mjs";
 import { pathToFileURL } from "node:url";
 
+const GIT = "/usr/bin/git";
 const BUMP_PREFIXES = ["skills/", ".claude-plugin/"];
 
 // Pure check. baseVersion and changedPaths are undefined when there is no base to compare.
@@ -30,7 +31,7 @@ export function checkVersions({ pluginName, pluginVersion, marketplaceVersions, 
 }
 
 function git(...args) {
-  return execFileSync("git", args, { encoding: "utf8" });
+  return execFileSync(GIT, args, { encoding: "utf8" });
 }
 
 function readJson(path) {
