@@ -16,6 +16,8 @@ ZIP_DATE = (1980, 1, 1, 0, 0, 0)
 def build_zip(skill_dir: Path, target: Path) -> None:
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(skill_dir.rglob("*")):
+            if path.is_symlink():
+                raise SystemExit(f"error: symlink not allowed in a release zip: {path}")
             if not path.is_file():
                 continue
             arcname = f"{skill_dir.name}/{path.relative_to(skill_dir).as_posix()}"
@@ -33,6 +35,10 @@ def main(argv: list[str]) -> int:
     outdir.mkdir(parents=True, exist_ok=True)
 
     skills = sorted(d for d in SKILLS_DIR.iterdir() if (d / "SKILL.md").is_file())
+    for skill in skills:
+        if skill.is_symlink():
+            print(f"error: skill dir is a symlink: {skill}", file=sys.stderr)
+            return 1
     if not skills:
         print(f"error: no skills with SKILL.md under {SKILLS_DIR}", file=sys.stderr)
         return 1
