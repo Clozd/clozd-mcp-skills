@@ -1,0 +1,40 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  zips:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Check tag against plugin.json
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(jq -r .version .claude-plugin/plugin.json)"
+          if [[ "$TAG" != "v$version" ]]; then
+            rc="${TAG#"v$version-rc."}"
+            if [[ "$rc" == "$TAG" || ! "$rc" =~ ^[0-9]+$ ]]; then
+              echo "error: tag $TAG does not match plugin.json version $version"
+              exit 1
+            fi
+          fi
+
+      - name: Build zips
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: python3 scripts/build-skill-zips.py "${TAG#v}" dist
+
+      - name: Upload to release
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$TAG" dist/*.zip dist/SHA256SUMS --clobber
