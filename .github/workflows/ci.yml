@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code@2.1.309
+      - run: claude plugin validate --strict .
+
+  versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/check-versions.mjs
+
+  house-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check each skill
+        run: |
+          status=0
+          for dir in skills/*/; do
+            node scripts/check-skill.mjs "${dir%/}" || status=1
+          done
+          exit "$status"
+
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide whether to run evals
+        id: gate
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ "$EVENT" = "pull_request" ] && [ "$HEAD_REPO" != "$REPO" ]; then
+            echo "::notice::Fork PR: no secrets available, so evals are skipped. A maintainer runs them by hand."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT" != "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [ -n "$(git diff --name-only "origin/$BASE_REF...HEAD" -- skills evals .claude-plugin)" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No changes under skills/, evals/ or .claude-plugin/, so evals are skipped."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require API key
+        if: steps.gate.outputs.run == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY is not set"
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        if: steps.gate.outputs.run == 'true'
+        run: npm install -g @anthropic-ai/claude-code@2.1.309
+      - name: Run evals
+        if: steps.gate.outputs.run == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: >
+          claude plugin eval .
+          --threshold 0.8
+          --trust-plugin
+          --max-cost-usd 5
+          --model claude-sonnet-5-5
+          --judge-model claude-haiku-5-5
+          --json eval-results.json
+      - name: Upload eval results
+        if: ${{ !cancelled() && steps.gate.outputs.run == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: eval-results.json
+          if-no-files-found: warn
