@@ -1,8 +1,8 @@
 name: cut-release
 
-# Manual: validate main, create the GitHub release, then build and attach the ZIPs.
-# The release is created with GITHUB_TOKEN, which does not trigger release.yml,
-# so the publish job calls it directly.
+# Manual: validate main, create a draft GitHub release, attach the ZIPs, then publish it.
+# Customers never see a release without its ZIPs. The release is created with
+# GITHUB_TOKEN, which does not trigger release.yml, so the publish job calls it directly.
 
 on:
   workflow_dispatch:
@@ -163,7 +163,7 @@ jobs:
         run: |
           flags=()
           if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); fi
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$TAG" --generate-notes "${flags[@]}"
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$TAG" --generate-notes --draft "${flags[@]}"
 
   publish:
     needs: [validate, create]
@@ -172,3 +172,39 @@ jobs:
     uses: ./.github/workflows/release.yml
     with:
       tag: ${{ needs.validate.outputs.tag }}
+      ref: ${{ github.sha }}
+
+  finalize:
+    needs: [validate, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+          echo "Published $TAG: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
+
+  cleanup:
+    needs: [validate, create, publish, finalize]
+    if: ${{ failure() && needs.create.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Delete the draft so the run can be repeated
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          is_draft="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)"
+          if [ "$is_draft" = "true" ]; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
+            echo "::warning::Deleted the unpublished draft $TAG. Fix the failure and run cut-release again."
+          else
+            echo "::error::$TAG is already published. Do not re-run cut-release; fix the assets with release.yml (workflow_dispatch, tag $TAG)."
+            exit 1
+          fi

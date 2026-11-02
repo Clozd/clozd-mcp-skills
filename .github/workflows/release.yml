@@ -6,8 +6,12 @@ on:
   workflow_call:
     inputs:
       tag:
-        description: Existing release tag to build and upload assets for
+        description: Release tag to build and upload assets for
         required: true
+        type: string
+      ref:
+        description: Commit to build from. Needed while the release is still a draft, because a draft has no git tag yet.
+        required: false
         type: string
   workflow_dispatch:
     inputs:
@@ -25,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.event.release.tag_name }}
+          ref: ${{ inputs.ref || inputs.tag || github.event.release.tag_name }}
 
       - name: Check tag against plugin.json
         env:
