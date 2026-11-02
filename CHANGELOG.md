@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+- Stop requiring a plugin version bump on every change, and run the evals in a pull request only when skill files, evals or the CI workflow change
 - Fix the `analyzing-win-loss` call order: every user calls `get_organizations` first, then `get_programs` with `organizationId` (the server requires it); if `get_organizations` is missing, tell the user instead of guessing; bump the plugin to 0.1.3 and update the `lose-trigger` eval and mock to match
 
 - Add `AGENTS.md` and a runner profile with the repo rules for automated jobs

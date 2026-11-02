@@ -27,7 +27,7 @@ No local gate. CI is the check; read `.github/workflows/` for the job names once
 ## House rules
 
 - Skill and plugin `description` fields are 200 characters or fewer.
-- `plugin.json` version equals the `marketplace.json` entry version, and both are bumped together.
+- `plugin.json` version equals the `marketplace.json` entry version, and `SKILL.md` `metadata.version` matches. Change the three only in a release change, not in a feature or fix PR.
 - No scripts inside `skills/`.
 - `SKILL.md` stays host-neutral: no `mcp__` tool names, no slash commands.
 - Skills are read-only.

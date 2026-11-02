@@ -9,7 +9,7 @@ Read the runner profile before any automated job: `.agents/skills/runner-profile
 ## House rules
 
 - Skill and plugin `description` fields are 200 characters or fewer.
-- `plugin.json` version equals the `marketplace.json` entry version; bump both together.
+- `plugin.json` version equals the `marketplace.json` entry version, and `SKILL.md` `metadata.version` matches. Change the three only in a release change, not in a feature or fix PR.
 - No scripts inside `skills/`.
 - `SKILL.md` stays host-neutral: no `mcp__` tool names, no slash commands.
 - Skills are read-only.
@@ -20,3 +20,7 @@ Read the runner profile before any automated job: `.agents/skills/runner-profile
 ## Checks
 
 No local gate. CI is the check; see `.github/workflows/` once it exists.
+
+## Releases
+
+A release change bumps the three version files and moves the `Unreleased` entries in `CHANGELOG.md` under a version heading. Then a maintainer runs the `cut-release` workflow: dry run first, then a release candidate if wanted, then the real release.
