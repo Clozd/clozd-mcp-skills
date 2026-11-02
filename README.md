@@ -2,7 +2,7 @@
 
 Clozd MCP customer skills for read-only win-loss analysis. Requires a Clozd account with access to the programs you want to analyze.
 
-This repository is public. Install the plugin in Claude Code using the commands below. A downloadable .zip for claude.ai is not available yet; see [For claude.ai admins](#for-claudeai-admins).
+This repository is public. Install the plugin in Claude Code using the commands below. For claude.ai, see [For claude.ai admins](#for-claudeai-admins).
 
 ## Install in Claude Code
 
@@ -27,8 +27,8 @@ ChatGPT: beta, not tested.
 
 ## For claude.ai admins
 
-No release has been published yet, so there is currently no downloadable .zip for claude.ai installation. The Claude Code installation above does not require a release.
+Download the .zip from [Releases](https://github.com/Clozd/clozd-mcp-skills/releases). Each release has a complete plugin .zip (`clozd-<version>.zip`), a standalone skill .zip (`analyzing-win-loss-<version>.zip`) and a `SHA256SUMS` file. They are different artifacts; use the one intended for your installation method.
 
-Check [Releases](https://github.com/Clozd/clozd-mcp-skills/releases) for published downloads. A complete plugin .zip and a standalone skill .zip are different artifacts; use the artifact intended for your installation method.
+A .zip upload does not update itself. To update, download the .zip from the newest release and upload it again. The Claude Code installation above does not use a release.
 
 GitHub's source-code .zip contains repository maintenance files and is not the customer plugin package.
