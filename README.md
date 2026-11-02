@@ -21,7 +21,7 @@ If authentication fails, reconnect the Clozd server. Never paste access tokens i
 
 Run `npx skills add Clozd/clozd-mcp-skills --skill analyzing-win-loss`.
 
-Or copy `skills/analyzing-win-loss/` into `.agents/skills/`, which Codex reads.
+Or copy `plugins/clozd/skills/analyzing-win-loss/` into `.agents/skills/`, which Codex reads.
 
 ChatGPT: beta, not tested.
 

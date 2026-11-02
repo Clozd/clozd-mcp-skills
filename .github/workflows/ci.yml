@@ -17,6 +17,7 @@ jobs:
           node-version: 22
       - run: npm install -g @anthropic-ai/claude-code@2.1.309
       - run: claude plugin validate --strict .
+      - run: claude plugin validate --strict plugins/clozd
 
   versions:
     runs-on: ubuntu-latest
@@ -41,7 +42,7 @@ jobs:
       - name: Check each skill
         run: |
           status=0
-          for dir in skills/*/; do
+          for dir in plugins/clozd/skills/*/; do
             node scripts/check-skill.mjs "${dir%/}" || status=1
           done
           exit "$status"
@@ -65,10 +66,10 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT" != "pull_request" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
-          elif [ -n "$(git diff --name-only "origin/$BASE_REF...HEAD" -- skills evals .claude-plugin)" ]; then
+          elif [ -n "$(git diff --name-only "origin/$BASE_REF...HEAD" -- plugins evals .claude-plugin)" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::No changes under skills/, evals/ or .claude-plugin/, so evals are skipped."
+            echo "::notice::No changes under plugins/, evals/ or .claude-plugin/, so evals are skipped."
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Require API key
@@ -87,18 +88,24 @@ jobs:
       - name: Install Claude Code
         if: steps.gate.outputs.run == 'true'
         run: npm install -g @anthropic-ai/claude-code@2.1.309
+      - name: Stage plugin with evals
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          mkdir "$RUNNER_TEMP/eval-plugin"
+          cp -R plugins/clozd/. "$RUNNER_TEMP/eval-plugin/"
+          cp -R evals "$RUNNER_TEMP/eval-plugin/evals"
       - name: Run evals
         if: steps.gate.outputs.run == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: >
-          claude plugin eval .
+          claude plugin eval "$RUNNER_TEMP/eval-plugin"
           --threshold 0.8
           --trust-plugin
           --max-cost-usd 5
           --model claude-sonnet-5-5
           --judge-model claude-haiku-5-5
-          --json eval-results.json
+          --json "$GITHUB_WORKSPACE/eval-results.json"
       - name: Upload eval results
         if: ${{ !cancelled() && steps.gate.outputs.run == 'true' }}
         uses: actions/upload-artifact@v4
