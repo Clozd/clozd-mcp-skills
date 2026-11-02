@@ -16,3 +16,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Move the installable plugin to `plugins/clozd/` (manifest, skill, a customer `README.md`, and copies of `LICENSE` and `SECURITY.md`, which CI keeps identical to the root files) so installs no longer include repository maintenance files, point the marketplace entry at `./plugins/clozd`, and bump the plugin to 0.1.1
 - Update CI and the release workflow for the new layout; the release now attaches the full plugin `.zip` as well as the skill `.zip`
 - Rewrite the README install status: the repository is public, and there is no downloadable `.zip` for claude.ai until a release is published
+- Add a manual `cut-release` workflow that validates `main`, creates the GitHub release (or a release candidate), and attaches the skill and plugin `.zip` files; `release.yml` can now also be called or re-run by tag
+- Run the `evals` job only after a new `eval-gate` job decides evals are needed, so PRs that skip evals never wait for approval in the `evals` environment, and bump the plugin to 0.1.2
