@@ -27,7 +27,11 @@ export function classify(entries, skillDiff) {
   const skillOnlyVersion = changedLines.every((line) => VERSION_LINE.test(line));
   const isRelease = onlyRelease && skillOnlyVersion;
   // A file that is only added (the first manifest) is not a hand edit of an existing file.
-  const editsExisting = entries.some((entry) => entry.status !== "A" && RELEASE_FILES.includes(entry.path));
+  // SKILL.md holds the skill text too, so only a change to its version line counts as a release-file edit.
+  const skillVersionChanged = changedLines.some((line) => VERSION_LINE.test(line));
+  const editsExisting = entries.some(
+    (entry) => entry.status !== "A" && RELEASE_FILES.includes(entry.path) && (entry.path !== SKILL || skillVersionChanged),
+  );
   return { isRelease, editsExisting };
 }
 
@@ -57,6 +61,8 @@ function selfTest() {
     { label: "a SKILL.md body change is not a release", got: classify(all, skillBody), isRelease: false, editsExisting: true },
     { label: "an extra file is not a release", got: classify([...all, e("M", "README.md")], skillVersion), isRelease: false, editsExisting: true },
     { label: "four of the five files is not a release", got: classify(all.slice(1), skillVersion), isRelease: false, editsExisting: true },
+    { label: "a SKILL.md body edit alone edits no release file", got: classify([e("M", SKILL)], skillBody), isRelease: false, editsExisting: false },
+    { label: "a SKILL.md version-line edit alone is flagged", got: classify([e("M", SKILL)], skillVersion), isRelease: false, editsExisting: true },
     { label: "no changes is not a release", got: classify([], ""), isRelease: false, editsExisting: false },
     { label: "an unrelated PR is not a release and edits no release file", got: classify([e("M", "README.md")], ""), isRelease: false, editsExisting: false },
     { label: "adding only the manifest edits no existing release file", got: classify([e("A", ".release-please-manifest.json"), e("M", "scripts/x.mjs")], ""), isRelease: false, editsExisting: false },
