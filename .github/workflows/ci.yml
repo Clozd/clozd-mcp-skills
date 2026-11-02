@@ -53,6 +53,7 @@ jobs:
 
   evals:
     runs-on: ubuntu-latest
+    environment: evals
     steps:
       - uses: actions/checkout@v4
         with:
