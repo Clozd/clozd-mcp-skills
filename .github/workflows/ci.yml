@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: node scripts/check-versions.mjs --self-test
+      - run: python3 scripts/test-package-contents.py
       - run: node scripts/check-versions.mjs
 
   house-rules:

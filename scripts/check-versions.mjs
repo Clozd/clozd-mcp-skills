@@ -46,7 +46,7 @@ export function pickBaseManifestPath(nestedExistsAtBase) {
 
 function existsAtRef(ref, path) {
   try {
-    git("cat-file", "-e", `${ref}:${path}`);
+    execFileSync(GIT, ["cat-file", "-e", `${ref}:${path}`], { stdio: "ignore" });
     return true;
   } catch {
     // cat-file -e exits non-zero when the path is absent at the ref
