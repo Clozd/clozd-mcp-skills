@@ -39,6 +39,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Check customer copies match the root files
+        run: |
+          cmp LICENSE plugins/clozd/LICENSE
+          cmp SECURITY.md plugins/clozd/SECURITY.md
       - name: Check each skill
         run: |
           status=0

@@ -13,6 +13,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add CI workflow (`validate`, `versions`, `house-rules`, `evals`) with `scripts/check-versions.mjs` and `scripts/check-skill.mjs`
 - Add release workflow that attaches one `.zip` per skill and a `SHA256SUMS` file to each GitHub release, built by `scripts/build-skill-zips.py`
 - Make `scripts/check-versions.mjs` and `scripts/build-skill-zips.py` layout-aware (repo root or `plugins/clozd/`), add a full plugin `.zip` when `plugins/clozd/` exists, and add `scripts/test-package-contents.py`
-- Move the installable plugin to `plugins/clozd/` (manifest, skill, and customer copies of `README.md`, `LICENSE` and `SECURITY.md`) so installs no longer include repository maintenance files, point the marketplace entry at `./plugins/clozd`, and bump the plugin to 0.1.1
+- Move the installable plugin to `plugins/clozd/` (manifest, skill, a customer `README.md`, and copies of `LICENSE` and `SECURITY.md`, which CI keeps identical to the root files) so installs no longer include repository maintenance files, point the marketplace entry at `./plugins/clozd`, and bump the plugin to 0.1.1
 - Update CI and the release workflow for the new layout; the release now attaches the full plugin `.zip` as well as the skill `.zip`
 - Rewrite the README install status: the repository is public, and there is no downloadable `.zip` for claude.ai until a release is published
