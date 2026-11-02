@@ -1,0 +1,30 @@
+name: release-pr-stale
+
+# Fails when a release PR has been open for more than 14 days, so a stuck release is not silent.
+
+on:
+  schedule:
+    - cron: "17 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail on an old release PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cutoff="$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+          old="$(gh pr list --repo "$REPO" --state open --label "autorelease: pending" --json number,createdAt \
+            --jq "[.[] | select(.createdAt < \"$cutoff\") | .number] | join(\" \")")"
+          if [ -n "$old" ]; then
+            echo "::error::Release PR open for more than 14 days: $old"
+            exit 1
+          fi
+          echo "no stale release PR"
