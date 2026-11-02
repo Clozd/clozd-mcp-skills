@@ -19,7 +19,7 @@ jobs:
         env:
           TAG: ${{ github.event.release.tag_name }}
         run: |
-          version="$(jq -r .version .claude-plugin/plugin.json)"
+          version="$(jq -r .version plugins/clozd/.claude-plugin/plugin.json)"
           if [[ "$TAG" != "v$version" ]]; then
             rc="${TAG#"v$version-rc."}"
             if [[ "$rc" == "$TAG" || ! "$rc" =~ ^[0-9]+$ ]]; then

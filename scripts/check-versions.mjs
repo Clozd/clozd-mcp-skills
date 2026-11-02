@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // Version checks. Usage: check-versions.mjs | --self-test
-// On pull_request (GITHUB_BASE_REF set) a change under skills/ or .claude-plugin/
+// On pull_request (GITHUB_BASE_REF set) a change under skills/, plugins/ or .claude-plugin/
 // also needs a plugin.json version that differs from the base branch.
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { metadataVersion, parseFrontmatter } from "./check-skill.mjs";
 import { pathToFileURL } from "node:url";
 
 const GIT = "/usr/bin/git";
-const BUMP_PREFIXES = ["skills/", ".claude-plugin/"];
+const BUMP_PREFIXES = ["skills/", "plugins/", ".claude-plugin/"];
+const NESTED_ROOT = "plugins/clozd";
 
 // Pure check. baseVersion and changedPaths are undefined when there is no base to compare.
 export function checkVersions({ pluginName, pluginVersion, marketplaceVersions, skillVersions, baseVersion, changedPaths }) {
@@ -25,7 +26,7 @@ export function checkVersions({ pluginName, pluginVersion, marketplaceVersions, 
   }
   const needsBump = changedPaths?.some((path) => BUMP_PREFIXES.some((prefix) => path.startsWith(prefix)));
   if (needsBump && baseVersion !== undefined && baseVersion === pluginVersion) {
-    errors.push(`skills/ or .claude-plugin/ changed but plugin.json version is still ${pluginVersion}; bump it`);
+    errors.push(`skills/, plugins/ or .claude-plugin/ changed but plugin.json version is still ${pluginVersion}; bump it`);
   }
   return errors;
 }
@@ -38,6 +39,21 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+// Pure. The plugin manifest lives under plugins/clozd once that layout exists at the base ref.
+export function pickBaseManifestPath(nestedExistsAtBase) {
+  return nestedExistsAtBase ? `${NESTED_ROOT}/.claude-plugin/plugin.json` : ".claude-plugin/plugin.json";
+}
+
+function existsAtRef(ref, path) {
+  try {
+    execFileSync(GIT, ["cat-file", "-e", `${ref}:${path}`], { stdio: "ignore" });
+    return true;
+  } catch {
+    // cat-file -e exits non-zero when the path is absent at the ref
+    return false;
+  }
+}
+
 function loadBase(baseRef) {
   const ref = `origin/${baseRef}`;
   try {
@@ -47,10 +63,11 @@ function loadBase(baseRef) {
   }
   const changedPaths = git("diff", "--name-only", `${ref}...HEAD`).split("\n").filter(Boolean);
   let baseVersion;
-  try {
-    git("cat-file", "-e", `${ref}:.claude-plugin/plugin.json`);
-    baseVersion = JSON.parse(git("show", `${ref}:.claude-plugin/plugin.json`)).version;
-  } catch {
+  const manifestPath = pickBaseManifestPath(existsAtRef(ref, pickBaseManifestPath(true)));
+  if (existsAtRef(ref, manifestPath)) {
+    console.log(`reading base manifest from ${manifestPath}`);
+    baseVersion = JSON.parse(git("show", `${ref}:${manifestPath}`)).version;
+  } else {
     // plugin.json absent at base: first introduction, nothing to compare against
     console.log(`${ref} has no plugin.json; skipping the bump check`);
   }
@@ -76,6 +93,12 @@ function selfTest() {
     { label: "missing marketplace entry fails", input: { ...good, marketplaceVersions: {} }, ok: false },
     { label: "skills change without bump fails", input: { ...good, baseVersion: "0.2.0" }, ok: false },
     { label: ".claude-plugin change without bump fails", input: { ...good, baseVersion: "0.2.0", changedPaths: [".claude-plugin/marketplace.json"] }, ok: false },
+    { label: "plugins change without bump fails", input: { ...good, baseVersion: "0.2.0", changedPaths: ["plugins/clozd/README.md"] }, ok: false },
+    { label: "plugins change with bump passes", input: { ...good, changedPaths: ["plugins/clozd/README.md"] }, ok: true },
+  ];
+  const assertions = [
+    { label: "nested manifest path", ok: pickBaseManifestPath(true) === "plugins/clozd/.claude-plugin/plugin.json" },
+    { label: "root manifest path", ok: pickBaseManifestPath(false) === ".claude-plugin/plugin.json" },
   ];
   let failed = 0;
   for (const { label, input, ok } of cases) {
@@ -84,18 +107,25 @@ function selfTest() {
       console.error(`self-test FAILED: ${label}`);
     }
   }
+  for (const { label, ok } of assertions) {
+    if (!ok) {
+      failed += 1;
+      console.error(`self-test FAILED: ${label}`);
+    }
+  }
   if (failed > 0) process.exit(1);
-  console.log(`check-versions self-test ok (${cases.length} cases)`);
+  console.log(`check-versions self-test ok (${cases.length + assertions.length} cases)`);
 }
 
 function main(args) {
   if (args[0] === "--self-test") return selfTest();
-  const plugin = readJson(".claude-plugin/plugin.json");
+  const root = existsSync(`${NESTED_ROOT}/.claude-plugin/plugin.json`) ? NESTED_ROOT : ".";
+  const plugin = readJson(`${root}/.claude-plugin/plugin.json`);
   const marketplace = readJson(".claude-plugin/marketplace.json");
   const marketplaceVersions = Object.fromEntries((marketplace.plugins ?? []).map((entry) => [entry.name, entry.version]));
   const skillVersions = {};
-  for (const name of readdirSync("skills", { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)) {
-    const parsed = parseFrontmatter(readFileSync(`skills/${name}/SKILL.md`, "utf8"));
+  for (const name of readdirSync(`${root}/skills`, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)) {
+    const parsed = parseFrontmatter(readFileSync(`${root}/skills/${name}/SKILL.md`, "utf8"));
     skillVersions[name] = parsed.error ? undefined : metadataVersion(parsed.lines);
   }
   const baseRef = process.env.GITHUB_BASE_REF;

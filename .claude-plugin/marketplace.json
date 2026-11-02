@@ -5,8 +5,8 @@
   "plugins": [
     {
       "name": "clozd",
-      "source": "./",
-      "version": "0.1.0",
+      "source": "./plugins/clozd",
+      "version": "0.1.1",
       "description": "Connects Claude to the Clozd MCP server."
     }
   ]

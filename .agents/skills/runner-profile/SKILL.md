@@ -11,14 +11,14 @@ This repo holds the public customer plugin `clozd`, with one read-only skill, `a
 
 ## Layout
 
-Today the root holds `.gitignore`, `CHANGELOG.md`, `LICENSE`, `README.md` and `SECURITY.md`. Later tickets add the following (all planned):
+The installable plugin lives in `plugins/clozd/`. Everything else is maintainer-only and never ships in the plugin package:
 
-- `.claude-plugin/plugin.json` (planned)
-- `.claude-plugin/marketplace.json` (planned)
-- `skills/<name>/SKILL.md` with `references/` (planned)
-- `skills/<name>/agents/openai.yaml` (planned)
-- `evals/` (planned)
-- `.github/workflows/` (planned)
+- `plugins/clozd/.claude-plugin/plugin.json`
+- `plugins/clozd/skills/<name>/SKILL.md` with `references/`
+- `plugins/clozd/skills/<name>/agents/openai.yaml`
+- `plugins/clozd/README.md`, `LICENSE`, `SECURITY.md` (customer copies of the root files)
+- `.claude-plugin/marketplace.json` (the catalog, outside the plugin)
+- `evals/`, `scripts/`, `.github/workflows/`, `AGENTS.md`, `.agents/`
 
 ## Checks
 
