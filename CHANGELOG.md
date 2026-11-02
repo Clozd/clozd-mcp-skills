@@ -12,3 +12,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add `skills/analyzing-win-loss/agents/openai.yaml` so Codex and the ChatGPT desktop app list the skill and know it needs the Clozd MCP server, and add an "Install in Codex" section to the README
 - Add CI workflow (`validate`, `versions`, `house-rules`, `evals`) with `scripts/check-versions.mjs` and `scripts/check-skill.mjs`
 - Add release workflow that attaches one `.zip` per skill and a `SHA256SUMS` file to each GitHub release, built by `scripts/build-skill-zips.py`
+- Make `scripts/check-versions.mjs` and `scripts/build-skill-zips.py` layout-aware (repo root or `plugins/clozd/`), add a full plugin `.zip` when `plugins/clozd/` exists, and add `scripts/test-package-contents.py`
+- Rewrite the README install status: the repository is public, and there is no downloadable `.zip` for claude.ai until a release is published
