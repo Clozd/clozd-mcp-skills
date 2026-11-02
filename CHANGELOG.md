@@ -17,3 +17,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Update CI and the release workflow for the new layout; the release now attaches the full plugin `.zip` as well as the skill `.zip`
 - Rewrite the README install status: the repository is public, and there is no downloadable `.zip` for claude.ai until a release is published
 - Add a manual `cut-release` workflow that validates `main`, creates the GitHub release (or a release candidate), and attaches the skill and plugin `.zip` files; `release.yml` can now also be called or re-run by tag
+- Split the eval run-or-skip decision into an `eval-gate` job that uses no secret, run the `evals` job only when it says so, and bump the plugin to 0.1.2
