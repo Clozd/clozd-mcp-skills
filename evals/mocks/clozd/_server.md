@@ -1,6 +1,7 @@
 ---
 type: agent
 tools:
+  - get_organizations
   - get_programs
   - list_filters
   - list_filter_values
@@ -12,7 +13,9 @@ tools:
 
 Fictional Clozd win-loss data. Answer each tool call from this data only. Invent nothing outside it.
 
-Program: "Acme Win-Loss" (id: prog_acme_001). It is the only program.
+Organization: "Acme Co" (id: org_acme_001). It is the only organization. get_programs needs this organizationId.
+
+Program: "Acme Win-Loss" (id: prog_acme_001). It is the only program in Acme Co.
 
 Filters and values:
 - quarter: Q1, Q2, Q3, Q4 (last quarter is the most recent complete one)

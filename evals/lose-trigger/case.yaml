@@ -10,9 +10,11 @@ graders:
     type: tool_used
     tool: Skill
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?analyzing-win-loss"'
-  - name: starts-with-get-programs
+  - name: organizations-before-programs
     type: llm
     focus: mock_calls
     criteria: |
-      PASS only if the first Clozd call listed is get_programs.
-      FAIL if any other Clozd call comes first or no Clozd call was made.
+      PASS only if the first Clozd call listed is get_organizations and a
+      later call is get_programs.
+      FAIL if any other Clozd call comes first, if get_programs is called
+      before get_organizations, or if no Clozd call was made.
