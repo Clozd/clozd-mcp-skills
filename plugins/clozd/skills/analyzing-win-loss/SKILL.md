@@ -4,7 +4,9 @@ description: Use for "why do we lose deals", "why do we win", win rate, or compe
 license: MIT
 compatibility: Requires the Clozd MCP server to be connected.
 metadata:
+  # x-release-please-start-version
   version: "0.1.3"
+  # x-release-please-end
   mcp-server: clozd
   mcp-tools: "get_programs,list_filters,list_filter_values,get_organizations,get_decision_drivers,get_driver_quotes,get_win_rates,get_competitors,get_competitor_sentiment_drivers,get_response_summaries"
 ---

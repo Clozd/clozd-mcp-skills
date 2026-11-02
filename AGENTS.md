@@ -9,7 +9,7 @@ Read the runner profile before any automated job: `.agents/skills/runner-profile
 ## House rules
 
 - Skill and plugin `description` fields are 200 characters or fewer.
-- `plugin.json` version equals the `marketplace.json` entry version, and `SKILL.md` `metadata.version` matches. Change the three only in a release change, not in a feature or fix PR.
+- `plugin.json` version equals the `marketplace.json` entry version, and `SKILL.md` `metadata.version` and `.release-please-manifest.json` match. They change only in the release PR.
 - No scripts inside `skills/`.
 - `SKILL.md` stays host-neutral: no `mcp__` tool names, no slash commands.
 - Skills are read-only.
@@ -30,4 +30,6 @@ No local gate. CI is the check; see `.github/workflows/` once it exists.
 
 ## Releases
 
-A release change bumps the three version files and adds a version heading with the new entries to `CHANGELOG.md`. Then a maintainer runs the `cut-release` workflow: dry run first, then a release candidate if wanted, then the real release.
+- Never edit version numbers, `.release-please-manifest.json` or `CHANGELOG.md` by hand. A bot opens one release PR from the conventional PR titles on `main`. A maintainer reads its changelog, approves it and merges it.
+- Then a maintainer runs the `cut-release` workflow: dry run first, then a release candidate if wanted, then the real release.
+- Cut a release candidate only after the release PR has merged. A fix after a release candidate means a new patch version.

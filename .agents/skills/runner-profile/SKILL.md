@@ -27,7 +27,7 @@ No local gate. CI is the check; read `.github/workflows/` for the job names once
 ## House rules
 
 - Skill and plugin `description` fields are 200 characters or fewer.
-- `plugin.json` version equals the `marketplace.json` entry version, and `SKILL.md` `metadata.version` matches. Change the three only in a release change, not in a feature or fix PR.
+- `plugin.json` version equals the `marketplace.json` entry version, and `SKILL.md` `metadata.version` and `.release-please-manifest.json` match. They change only in the release PR.
 - No scripts inside `skills/`.
 - `SKILL.md` stays host-neutral: no `mcp__` tool names, no slash commands.
 - Skills are read-only.
@@ -40,6 +40,7 @@ No local gate. CI is the check; read `.github/workflows/` for the job names once
 - One concern per PR.
 - PR titles are conventional: `type(scope): subject`, for example `fix(skill): ...` or `feat(skill): ...`. Use `fix(plugin)` for a change to any other file the plugin ships to customers. No ticket IDs, customer names or internal URLs in titles.
 - Never publish, tag or release.
+- Never edit version numbers, `.release-please-manifest.json` or `CHANGELOG.md` by hand. A bot opens the release PR.
 - Never edit `.github/workflows/` unless the ticket says so.
 
 ## Never

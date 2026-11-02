@@ -1,0 +1,37 @@
+name: release-please
+
+# Opens and updates ONE release PR from the conventional PR titles on main.
+# It never tags or publishes: cut-release does that, after a human merges the release PR.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      # A PR made with GITHUB_TOKEN does not start pull_request workflows, but workflow_dispatch is allowed.
+      # Every update force-pushes the branch, so every update needs a fresh run.
+      - name: Run CI on the release PR branch
+        if: steps.rp.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ fromJSON(steps.rp.outputs.pr).headBranchName }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
