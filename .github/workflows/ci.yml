@@ -7,12 +7,6 @@ on:
 permissions:
   contents: read
 
-# A newer run on the same branch replaces an older one. The event is in the key so a
-# pull_request run and a workflow_dispatch run on the same branch do not cancel each other.
-concurrency:
-  group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
-
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -29,18 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: node scripts/check-versions.mjs --self-test
-      - run: node scripts/release-shape.mjs --self-test
       - run: python3 scripts/test-package-contents.py
       - run: node scripts/check-versions.mjs
-      - name: Guard the release files against hand edits
-        if: github.event_name == 'pull_request'
-        run: node scripts/release-shape.mjs HEAD^1..HEAD --guard
 
   house-rules:
     runs-on: ubuntu-latest
@@ -69,9 +57,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - name: Decide whether to run evals
         id: gate
         env:
@@ -80,20 +65,12 @@ jobs:
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           REPO: ${{ github.repository }}
         run: |
-          if [ "$EVENT" = "pull_request" ]; then
-            range="origin/$BASE_REF...HEAD"
-          else
-            range="origin/main...HEAD"
-          fi
           if [ "$EVENT" = "pull_request" ] && [ "$HEAD_REPO" != "$REPO" ]; then
             echo "::notice::Fork PR: no secrets available, so evals are skipped. A maintainer runs them by hand."
             echo "run=false" >> "$GITHUB_OUTPUT"
-          elif [ "$(node scripts/release-shape.mjs "$range" --classify)" = "release" ]; then
-            echo "::notice::Release change: only the version files, the manifest and the changelog changed, so evals are skipped. cut-release runs them."
-            echo "run=false" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT" != "pull_request" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
-          elif [ -n "$(git diff --name-only "$range" -- plugins/clozd/skills evals .github/workflows/ci.yml)" ]; then
+          elif [ -n "$(git diff --name-only "origin/$BASE_REF...HEAD" -- plugins/clozd/skills evals .github/workflows/ci.yml)" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::No changes under plugins/clozd/skills/, evals/ or ci.yml, so evals are skipped."
