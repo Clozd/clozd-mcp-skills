@@ -23,8 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -72,10 +70,10 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           elif [ "$EVENT" != "pull_request" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
-          elif [ -n "$(git diff --name-only "origin/$BASE_REF...HEAD" -- plugins evals .claude-plugin)" ]; then
+          elif [ -n "$(git diff --name-only "origin/$BASE_REF...HEAD" -- plugins/clozd/skills evals .github/workflows/ci.yml)" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::No changes under plugins/, evals/ or .claude-plugin/, so evals are skipped."
+            echo "::notice::No changes under plugins/clozd/skills/, evals/ or ci.yml, so evals are skipped."
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
