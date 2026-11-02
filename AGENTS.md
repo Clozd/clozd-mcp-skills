@@ -17,10 +17,17 @@ Read the runner profile before any automated job: `.agents/skills/runner-profile
 - No secrets, customer names or internal URLs.
 - Never name a private repo in install text.
 
+## PR titles
+
+- PR titles are conventional: `type(scope): subject`, for example `fix(skill): ...` or `feat(skill): ...`.
+- Use `fix(plugin)` for a change to any other file the plugin ships to customers.
+- Titles are public and customer-readable: no ticket IDs, customer names or internal URLs.
+- The `pr-title` check fails a title that does not match.
+
 ## Checks
 
 No local gate. CI is the check; see `.github/workflows/` once it exists.
 
 ## Releases
 
-A release change bumps the three version files and moves the `Unreleased` entries in `CHANGELOG.md` under a version heading. Then a maintainer runs the `cut-release` workflow: dry run first, then a release candidate if wanted, then the real release.
+A release change bumps the three version files and adds a version heading with the new entries to `CHANGELOG.md`. Then a maintainer runs the `cut-release` workflow: dry run first, then a release candidate if wanted, then the real release.
