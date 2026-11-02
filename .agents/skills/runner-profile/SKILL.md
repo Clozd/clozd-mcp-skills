@@ -38,6 +38,7 @@ No local gate. CI is the check; read `.github/workflows/` for the job names once
 ## PR rules
 
 - One concern per PR.
+- PR titles are conventional: `type(scope): subject`, for example `fix(skill): ...` or `feat(skill): ...`. Use `fix(plugin)` for a change to any other file the plugin ships to customers. No ticket IDs, customer names or internal URLs in titles.
 - Never publish, tag or release.
 - Never edit `.github/workflows/` unless the ticket says so.
 
