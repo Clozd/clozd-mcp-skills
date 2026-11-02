@@ -57,4 +57,4 @@ Read `references/data-layers.md` at this step.
 
 - Auth error: ask the user to reconnect the Clozd server. Never ask for tokens.
 - Error `MCP010`: PII redaction blocks that tool. Tell the user. Do not retry and do not work around it.
-- `get_organizations` is missing: call `get_programs` without `organizationId`. If that fails, tell the user.
+- `get_organizations` is missing: tell the user the Clozd server is not fully connected. Do not guess an `organizationId`.
