@@ -3,6 +3,18 @@ name: release
 on:
   release:
     types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: Existing release tag to build and upload assets for
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build and upload assets for (re-run after a failed upload)
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -13,11 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
 
       - name: Check tag against plugin.json
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
         run: |
           version="$(jq -r .version plugins/clozd/.claude-plugin/plugin.json)"
           if [[ "$TAG" != "v$version" ]]; then
@@ -30,11 +42,11 @@ jobs:
 
       - name: Build zips
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
         run: python3 scripts/build-skill-zips.py "${TAG#v}" dist
 
       - name: Upload to release
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "$TAG" dist/*.zip dist/SHA256SUMS --clobber
