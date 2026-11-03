@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Version checks. Usage: check-versions.mjs | --self-test
-// plugin.json, the marketplace entry, every SKILL.md and the release manifest must carry the same version.
+// plugin.json, the marketplace entry and every SKILL.md must carry the same version.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { metadataVersion, parseFrontmatter } from "./check-skill.mjs";
 import { pathToFileURL } from "node:url";
@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 const NESTED_ROOT = "plugins/clozd";
 
 // Pure check.
-export function checkVersions({ pluginName, pluginVersion, marketplaceVersions, skillVersions, manifestVersion }) {
+export function checkVersions({ pluginName, pluginVersion, marketplaceVersions, skillVersions }) {
   const errors = [];
   if (!pluginVersion) errors.push("plugin.json has no version");
   if (marketplaceVersions[pluginName] === undefined) {
@@ -20,8 +20,6 @@ export function checkVersions({ pluginName, pluginVersion, marketplaceVersions, 
     if (version === undefined) errors.push(`${skill}: SKILL.md has no metadata.version`);
     else if (version !== pluginVersion) errors.push(`${skill}: metadata.version ${version} != plugin.json version ${pluginVersion}`);
   }
-  if (manifestVersion === undefined) errors.push(".release-please-manifest.json has no version for \".\"");
-  else if (manifestVersion !== pluginVersion) errors.push(`.release-please-manifest.json version ${manifestVersion} != plugin.json version ${pluginVersion}`);
   return errors;
 }
 
@@ -35,7 +33,6 @@ function selfTest() {
     pluginVersion: "0.2.0",
     marketplaceVersions: { p: "0.2.0" },
     skillVersions: { s: "0.2.0" },
-    manifestVersion: "0.2.0",
   };
   const cases = [
     { label: "all equal passes", input: good, ok: true },
@@ -43,8 +40,6 @@ function selfTest() {
     { label: "skill mismatch fails", input: { ...good, skillVersions: { s: "0.1.0" } }, ok: false },
     { label: "missing skill version fails", input: { ...good, skillVersions: { s: undefined } }, ok: false },
     { label: "missing marketplace entry fails", input: { ...good, marketplaceVersions: {} }, ok: false },
-    { label: "manifest mismatch fails", input: { ...good, manifestVersion: "0.1.0" }, ok: false },
-    { label: "manifest missing fails", input: { ...good, manifestVersion: undefined }, ok: false },
     { label: "missing plugin version fails", input: { ...good, pluginVersion: undefined }, ok: false },
   ];
   let failed = 0;
@@ -69,14 +64,11 @@ function main(args) {
     const parsed = parseFrontmatter(readFileSync(`${root}/skills/${name}/SKILL.md`, "utf8"));
     skillVersions[name] = parsed.error ? undefined : metadataVersion(parsed.lines);
   }
-  const manifestPath = ".release-please-manifest.json";
-  const manifestVersion = existsSync(manifestPath) ? readJson(manifestPath)["."] : undefined;
   const errors = checkVersions({
     pluginName: plugin.name,
     pluginVersion: plugin.version,
     marketplaceVersions,
     skillVersions,
-    manifestVersion,
   });
   for (const error of errors) console.error(`::error::${error}`);
   if (errors.length > 0) process.exit(1);

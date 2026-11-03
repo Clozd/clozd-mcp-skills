@@ -30,4 +30,7 @@ No local gate. CI is the check; see `.github/workflows/` once it exists.
 
 ## Releases
 
-A release change bumps the three version files and adds a version heading with the new entries to `CHANGELOG.md`. Then a maintainer runs the `cut-release` workflow: dry run first, then a release candidate if wanted, then the real release.
+- Put new entries under `## Unreleased` in `CHANGELOG.md`.
+- A release PR bumps the three version files and renames `Unreleased` to the new version heading. It changes nothing else.
+- Then a maintainer runs the `cut-release` workflow: dry run first, then a release candidate if wanted, then the real release.
+- Cut a release candidate only after the release PR has merged. A fix after a release candidate means a new patch version.
