@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Correct organization discovery and program arguments for consultancy and organization-scoped connections; distinguish authorization blockers from empty data
+
 ## 0.1.3 and earlier
 
 - Stop requiring a plugin version bump on every change, and run the evals in a pull request only when skill files, evals or the CI workflow change

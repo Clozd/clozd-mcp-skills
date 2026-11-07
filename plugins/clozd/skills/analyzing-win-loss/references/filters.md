@@ -10,7 +10,7 @@ Filter values match exactly. Never type a value from memory.
 
 ## Example
 
-The user asks: "Why did we lose in EMEA?"
+The user asks: "Why did we lose in EMEA?" First resolve organization scope and `programId` using the skill's call order and the connected tool schema. The steps below start after program selection.
 
 1. `list_filters` returns a region field.
 2. `list_filter_values` for that field returns the allowed region values.

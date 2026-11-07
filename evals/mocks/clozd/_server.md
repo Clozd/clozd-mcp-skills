@@ -1,7 +1,6 @@
 ---
 type: agent
 tools:
-  - get_organizations
   - get_programs
   - list_filters
   - list_filter_values
@@ -13,9 +12,12 @@ tools:
 
 Fictional Clozd win-loss data. Answer each tool call from this data only. Invent nothing outside it.
 
-Organization: "Acme Co" (id: org_acme_001). It is the only organization. get_programs needs this organizationId.
+This connection is organization-scoped. `get_organizations` is not advertised.
+`get_programs` has a strict empty-object input schema: accept `{}` only and reject
+any arguments, including `organizationId`. The organization comes from the
+authenticated token. A valid call returns the program below.
 
-Program: "Acme Win-Loss" (id: prog_acme_001). It is the only program in Acme Co.
+Program: "Acme Win-Loss" (id: prog_acme_001). It is the only program.
 
 Filters and values:
 - quarter: Q1, Q2, Q3, Q4 (last quarter is the most recent complete one)
