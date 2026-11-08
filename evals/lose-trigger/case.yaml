@@ -11,12 +11,7 @@ graders:
     tool: Skill
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?analyzing-win-loss"'
   - name: starts-with-get-programs
-    type: llm
-    focus: mock_calls
+    type: regex
+    target: mock_calls
     arm: both
-    criteria: |
-      This mock connection is organization-scoped.
-      PASS only if the first Clozd call listed is get_programs with empty
-      arguments, and no get_organizations call is attempted.
-      FAIL if organizationId or any unsupported argument is supplied, any other
-      Clozd call comes first, or no Clozd call was made.
+    pattern: "^(?![\\s\\S]*\"tool\":\"mcp__plugin_clozd_clozd__get_organizations\")\\{\"tool\":\"mcp__plugin_clozd_clozd__get_programs\",\"input\":\\{\\},\"output\":"

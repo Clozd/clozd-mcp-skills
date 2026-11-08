@@ -7,14 +7,10 @@ execution:
   allowed_tools: [Skill, Read]
 graders:
   - name: stops-after-denial
-    type: llm
-    focus: mock_calls
+    type: regex
+    target: mock_calls
     arm: both
-    criteria: |
-      PASS only if the assistant calls get_programs with empty arguments once,
-      receives the authorization denial, and makes no further Clozd calls.
-      FAIL if it tries get_organizations, changes organizationId, retries the
-      denied call, or proceeds to analysis tools.
+    pattern: "^\\{\"tool\":\"mcp__plugin_clozd_clozd__get_programs\",\"input\":\\{\\},\"output\":(?=[^\\n]*MCP002)[^\\n]+\\}\\s*$"
   - name: reports-authorization-blocker
     type: llm
     criteria: |

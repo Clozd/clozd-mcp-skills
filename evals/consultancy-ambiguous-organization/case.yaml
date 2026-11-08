@@ -10,14 +10,10 @@ execution:
   allowed_tools: [Skill, Read]
 graders:
   - name: discovers-before-programs
-    type: llm
-    focus: mock_calls
+    type: regex
+    target: mock_calls
     arm: both
-    criteria: |
-      PASS only if get_organizations is called with empty arguments and
-      get_programs is not called before the user selects an organization.
-      FAIL if an organization is guessed or get_programs is called without
-      organizationId.
+    pattern: "^\\{\"tool\":\"mcp__plugin_clozd_clozd__get_organizations\",\"input\":\\{\\},\"output\":[^\\n]+\\}\\s*$"
   - name: asks-for-selection
     type: llm
     criteria: |

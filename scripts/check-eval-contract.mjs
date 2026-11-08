@@ -18,6 +18,14 @@ const CONTRACTS = {
   },
 };
 
+function readCallPattern(caseName) {
+  const source = readFileSync(new URL(`../evals/${caseName}/case.yaml`, import.meta.url), "utf8");
+  // These cases deliberately store their single regex as a JSON-quoted YAML scalar.
+  const patterns = [...source.matchAll(/^    pattern: (".*")$/gm)];
+  assert.equal(patterns.length, 1, `${caseName}: expected one call-sequence pattern`);
+  return new RegExp(JSON.parse(patterns[0][1]));
+}
+
 function checkResults(result) {
   assert.equal(result.schemaVersion, 1, "unsupported eval result schema");
   assert.equal(result.partial, false, "eval suite did not finish");
@@ -38,18 +46,11 @@ function checkResults(result) {
         assert.equal(grader.scored, true, `${label}: ${graderName} excluded from gating`);
         assert.equal(grader.passed, true, `${label}: ${graderName} failed`);
       }
-      // The harness records the mock-call JSONL shown to this grader as evidence.
-      // Check calls directly as well, so a mistaken judge verdict cannot hide them.
-      const evidence = run.graders.find((item) => item.name === contract.grader).evidence;
-      assert.ok(typeof evidence === "string" && evidence.trim(), `${label}: missing call evidence`);
-      const calls = evidence.trim().split("\n").map((line) => JSON.parse(line));
-      assert.equal(calls.length, 1, `${label}: expected one discovery/program call and then stop`);
-      const call = calls[0];
-      assert.equal(call.tool.split("__").at(-1), contract.tool, `${label}: wrong tool`);
-      assert.deepEqual(call.input, contract.input, `${label}: wrong arguments`);
-      if (name === "authorization-denied") {
-        assert.match(call.output, /MCP002/, `${label}: denial was not exercised`);
-      }
+      const definition = entry.graders.find((grader) => grader.name === contract.grader);
+      assert.equal(definition.type, "regex", `${label}: call check must be deterministic`);
+      assert.equal(definition.config.target, "mock_calls", `${label}: wrong call-check target`);
+      assert.equal(definition.config.pattern, readCallPattern(name).source, `${label}: unexpected call-check pattern`);
+      assert.equal(run.mocks.calls.total, 1, `${label}: expected one discovery/program call and then stop`);
     }
   }
 }
@@ -59,7 +60,10 @@ function selfTest() {
     schemaVersion: 1, partial: false,
     cases: Object.entries(CONTRACTS).map(([name, contract]) => ({
       name, runsPerCase: 1,
-      arms: { with: [{ error: null, skippedPaidGraders: false, mocks: { warnings: [] }, graders: [
+      graders: [{ name: contract.grader, type: "regex", config: {
+        target: "mock_calls", pattern: readCallPattern(name).source,
+      } }],
+      arms: { with: [{ error: null, skippedPaidGraders: false, mocks: { warnings: [], calls: { total: 1 } }, graders: [
         { name: contract.grader, scored: true, passed: true, evidence: JSON.stringify({
           tool: `mcp__plugin_clozd_clozd__${contract.tool}`, input: contract.input,
           output: name === "authorization-denied" ? "HTTP 403 MCP002" : "fixture result",
@@ -84,15 +88,9 @@ function selfTest() {
     (result) => { callGrader(result).scored = false; },
     (result) => { callGrader(result).passed = false; },
     (result) => { result.cases[0].arms.with[0].graders[1].passed = false; },
-    (result) => { callGrader(result).evidence = ""; },
-    (result) => { callGrader(result).evidence += "\n" + callGrader(result).evidence; },
-    (result) => mutateCall(result, 0, (call) => { call.tool = "get_organizations"; }),
-    (result) => mutateCall(result, 0, (call) => { call.input.organizationId = "another-org"; }),
-    (result) => mutateCall(result, 0, (call) => { call.output = "[]"; }),
-    (result) => mutateCall(result, 1, (call) => { call.tool = "get_programs"; }),
-    (result) => mutateCall(result, 2, (call) => { call.input = {}; }),
-    (result) => mutateCall(result, 2, (call) => { call.input.organizationId = "wrong-org"; }),
-    (result) => mutateCall(result, 2, (call) => { call.input.unsupported = true; }),
+    (result) => { result.cases[0].arms.with[0].mocks.calls.total = 2; },
+    (result) => { result.cases[0].graders[0].type = "llm"; },
+    (result) => { result.cases[0].graders[0].config.pattern = ".*"; },
     (result) => { result.cases[0].arms.with[0].mocks.warnings.push("no _tools.json entry for get_programs"); },
   ];
   for (const mutate of invalid) {
@@ -100,7 +98,39 @@ function selfTest() {
     mutate(result);
     assert.throws(() => checkResults(result));
   }
-  console.log(`eval contract self-test ok (valid result + ${invalid.length} negative controls)`);
+  const invalidCalls = [
+    [0, (call) => { call.tool = "mcp__plugin_clozd_clozd__get_organizations"; }],
+    [0, (call) => { call.input.organizationId = "another-org"; }],
+    [0, (call) => { call.output = "[]"; }],
+    [1, (call) => { call.tool = "mcp__plugin_clozd_clozd__get_programs"; }],
+    [2, (call) => { call.input = {}; }],
+    [2, (call) => { call.input.organizationId = "wrong-org"; }],
+    [2, (call) => { call.input.unsupported = true; }],
+  ];
+  for (const entry of valid.cases) {
+    const evidence = entry.arms.with[0].graders[0].evidence;
+    assert.ok(readCallPattern(entry.name).test(evidence));
+    assert.ok(!readCallPattern(entry.name).test(""));
+    assert.ok(!readCallPattern(entry.name).test(`${evidence}\n${evidence}`));
+  }
+  for (const [index, mutate] of invalidCalls) {
+    const result = structuredClone(valid);
+    mutateCall(result, index, mutate);
+    const entry = result.cases[index];
+    const grader = callGrader(result, index);
+    grader.passed = readCallPattern(entry.name).test(grader.evidence);
+    assert.equal(grader.passed, false, `${entry.name}: invalid call passed the regex`);
+    assert.throws(() => checkResults(result));
+  }
+  const ordinary = readCallPattern("lose-trigger");
+  const programCall = valid.cases[0].arms.with[0].graders[0].evidence;
+  const organizationCall = valid.cases[1].arms.with[0].graders[0].evidence;
+  const analysisCall = JSON.stringify({ tool: "mcp__plugin_clozd_clozd__get_decision_drivers", input: { programId: "fixture" }, output: "[]" });
+  assert.ok(ordinary.test(`${programCall}\n${analysisCall}`));
+  assert.ok(!ordinary.test(`${analysisCall}\n${programCall}`));
+  assert.ok(!ordinary.test(`${programCall}\n${organizationCall}`));
+  assert.ok(!ordinary.test(valid.cases[2].arms.with[0].graders[0].evidence));
+  console.log(`eval contract self-test ok (${invalid.length} invalid results, ${invalidCalls.length} invalid calls, empty/repeated calls, ordinary call order)`);
 }
 
 try {
