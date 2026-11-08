@@ -27,6 +27,7 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/check-versions.mjs --self-test
+      - run: node scripts/check-eval-contract.mjs --self-test
       - run: python3 scripts/test-package-contents.py
       - run: node scripts/check-versions.mjs
 
@@ -113,6 +114,9 @@ jobs:
           --model claude-sonnet-5-5
           --judge-model claude-haiku-5-5
           --json "$GITHUB_WORKSPACE/eval-results.json"
+      - name: Check organization-scope acceptance results
+        if: ${{ !cancelled() }}
+        run: node scripts/check-eval-contract.mjs eval-results.json
       - name: Upload eval results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

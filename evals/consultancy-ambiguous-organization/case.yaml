@@ -7,11 +7,12 @@ execution:
     consultancy user but have not picked an organization. Help me choose
     before you list programs.
   max_turns: 12
-  allowed_tools: [Skill]
+  allowed_tools: [Skill, Read]
 graders:
   - name: discovers-before-programs
     type: llm
     focus: mock_calls
+    arm: both
     criteria: |
       PASS only if get_organizations is called with empty arguments and
       get_programs is not called before the user selects an organization.

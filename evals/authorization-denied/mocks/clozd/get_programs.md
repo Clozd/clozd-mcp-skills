@@ -1,5 +1,6 @@
 ---
 type: fixed
+error: true
 ---
 
 HTTP 403

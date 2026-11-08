@@ -17,7 +17,7 @@ This connection is organization-scoped. `get_organizations` is not advertised.
 any arguments, including `organizationId`. The organization comes from the
 authenticated token. A valid call returns the program below.
 
-Program: "Acme Win-Loss" (id: prog_acme_001). It is the only program.
+Program: "Acme Win-Loss" (id: 33333333-3333-4333-8333-333333333333). It is the only program.
 
 Filters and values:
 - quarter: Q1, Q2, Q3, Q4 (last quarter is the most recent complete one)

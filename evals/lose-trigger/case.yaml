@@ -4,7 +4,7 @@ runs: 3
 execution:
   prompt: Why did we lose deals last quarter?
   max_turns: 12
-  allowed_tools: [Skill]
+  allowed_tools: [Skill, Read]
 graders:
   - name: skill-invoked
     type: tool_used
@@ -13,6 +13,7 @@ graders:
   - name: starts-with-get-programs
     type: llm
     focus: mock_calls
+    arm: both
     criteria: |
       This mock connection is organization-scoped.
       PASS only if the first Clozd call listed is get_programs with empty
