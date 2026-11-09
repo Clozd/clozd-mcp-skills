@@ -4,17 +4,14 @@ runs: 3
 execution:
   prompt: Why did we lose deals last quarter?
   max_turns: 12
-  allowed_tools: [Skill]
+  allowed_tools: [Skill, Read]
 graders:
   - name: skill-invoked
     type: tool_used
     tool: Skill
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?analyzing-win-loss"'
-  - name: organizations-before-programs
-    type: llm
-    focus: mock_calls
-    criteria: |
-      PASS only if the first Clozd call listed is get_organizations and a
-      later call is get_programs.
-      FAIL if any other Clozd call comes first, if get_programs is called
-      before get_organizations, or if no Clozd call was made.
+  - name: starts-with-get-programs
+    type: regex
+    target: mock_calls
+    arm: both
+    pattern: "^(?![\\s\\S]*\"tool\":\"mcp__plugin_clozd_clozd__get_organizations\")\\{\"tool\":\"mcp__plugin_clozd_clozd__get_programs\",\"input\":\\{\\},\"output\":"

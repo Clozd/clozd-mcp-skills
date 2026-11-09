@@ -1,0 +1,20 @@
+schema_version: "1.1"
+name: authorization-denied
+runs: 3
+execution:
+  prompt: Why did we lose deals last quarter?
+  max_turns: 12
+  allowed_tools: [Skill, Read]
+graders:
+  - name: stops-after-denial
+    type: regex
+    target: mock_calls
+    arm: both
+    pattern: "^\\{\"tool\":\"mcp__plugin_clozd_clozd__get_programs\",\"input\":\\{\\},\"output\":(?=[^\\n]*MCP002)[^\\n]+\\}\\s*$"
+  - name: reports-authorization-blocker
+    type: llm
+    criteria: |
+      PASS only if the assistant reports an authorization/access blocker and
+      says it could not retrieve the data. FAIL if it claims discovery is
+      required, prescribes reconnecting as the fix for this denial, or treats
+      the denial as no programs, no deals, or zero losses.
